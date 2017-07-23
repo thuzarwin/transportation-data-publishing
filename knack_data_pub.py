@@ -16,6 +16,7 @@ from copy import deepcopy
 import logging
 import traceback
 import pdb
+import json
 import arrow
 import agol_helpers
 import knack_helpers
@@ -121,10 +122,16 @@ def main(date_time):
             else:
                 sep = ','
 
-            knack_data = data_helpers.unix_to_iso(knack_data)
+            csv_data = data_helpers.unix_to_iso(deepcopy(knack_data))
             file_name = '{}/{}.csv'.format(csv_dest, dataset)
-            data_helpers.write_csv(knack_data, file_name=file_name, sep=sep)
+            data_helpers.write_csv(csv_data, file_name=file_name, sep=sep)
 
+        if out_json:
+            json_data = data_helpers.unix_to_iso(deepcopy(knack_data))
+            file_name = '{}/{}.json'.format(csv_dest, dataset)
+
+            with open(file_name, 'w') as fout:
+                json.dump(json_data, fout)
 
         if github_pub:
             print('commit to github')
@@ -156,6 +163,7 @@ def cli_args():
     parser.add_argument('-socrata', action='store_true', default=False, help='Publish to Socrata, AKA City of Austin Open Data Portal.')
     parser.add_argument('-csv', action='store_true', default=False, help='Write output to csv.')
     parser.add_argument('-github', action='store_true', default=False, help='Commit data to github.')
+    parser.add_argument('-json', action='store_true', default=False, help='Write data to JSON.')
     args = parser.parse_args()
     
     return(args)
@@ -170,6 +178,7 @@ if __name__ == '__main__':
     agol_pub = args.agol
     write_csv = args.csv
     github_pub = args.github
+    out_json = args.json
     
     now = arrow.now()
     now_s = now.format('YYYY_MM_DD')
