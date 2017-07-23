@@ -1,26 +1,95 @@
+#  do you need to conn.commit() after execute values?
 import csv
+import json
+import os
+import sys
+import socket
+
+sys.path.append("H:\\ATD_BSA\\modules")
+sys.path.append("H:\\ATD_BSA\\ATD_GitHub\\transportation-data-publishing")
+
+import logging
+import traceback
+import pytz
 import pdb
+from gtipy import * # make sure the gtipy directory is in your python path
 import psycopg2
 from psycopg2.extras import execute_values
 from datetime import datetime
 import secrets
 
-'''
-GRIDSMART counts file fields:
-    timestamp
-    approach
-    turn
-    length_ft
-    speed_mph
-    phase
-    light
-    seconds_of_light_state
-    seconds_since_green
-    recent_free_flow_speed_mph
-    calibration_free_flow_speed_mph
-    include_in_approach_data
-    zone_id
-'''
+
+fieldmap_zones = {
+    'Id' : 'id',
+    'MaxRecall' : 'max_recall',
+    'Alerts' : 'alerts',
+    'DelaySeconds' : 'delay_seconds',
+    'TurnType' : 'turn_type',
+    'SpeedScale' : 'speed_scale',
+    'VisibilityDetectionEnabled' : 'visibility_detection_enabled',
+    'DelaySecondsPrecise' : 'delay_seconds_precise',
+    'ProtectedPhases' : 'protected_phases',
+    'Latching' : 'latching',
+    'PermissivePhases' : 'permissive_phases',
+    'ExtensionSeconds' : 'extension_seconds',
+    'ApproachType' : 'approach_type',
+    'ExpectedFreeFlowSpeed' : 'expected_freeflow_speed',
+    'IncludeInData' : 'include_in_data',
+    'Name' : 'name',
+    'site_id' : 'site_id',
+    'traffic_counts' : 'traffic_counts',
+}
+
+
+def getJSON(path):
+    try:
+        with open(path, 'r') as fin:
+            return  json.loads(fin.read())
+    except:
+        print()
+
+def getSiteData(detector):
+    port = 8902
+
+    if not 'DETECTOR_IP' in device.keys():
+        raise ValueError('Device missing IP address')
+
+    ip = device['DETECTOR_IP']
+
+    try:
+        socket.inet_aton(ip)    
+    except socket.error:
+        raise ValueError('Device has invalid IP address')
+    try:
+        # create SiteAPI object using the utility function
+        site = site_at_ip_port(ip, port)
+
+    except requests.exceptions.ConnectionError as e:
+        raise(e)
+
+    return site
+
+def appendSiteID(zones, site_id):
+    for key in zones.keys():
+        zones[key]['site_id'] = site_id
+    return zones
+
+def removeNulls(obj):
+    '''
+        Turn list fields into csv lines
+        To be inserted into text fields in database
+    '''
+    for key in obj.keys():
+        if not obj[key]:
+            obj.pop(key)
+
+    return obj
+
+
+def findRow(cursor, key, val):
+    try:
+        print('use mogrify')
+
 
 def buildInsertTemplate(columns):
     col_str = ', '.join(str(c) for c in columns)
@@ -41,8 +110,8 @@ def processCountFile(conn, fname, page_size):
     inserts = []
     count = 0
 
-    with open(fname, 'r') as infile:
-        reader = csv.reader(infile)
+    with open(fname, 'r') as fin:
+        reader = csv.reader(fin)
         next(reader, None)  # skip header
 
         for row in reader:        
@@ -77,46 +146,73 @@ def processCountFile(conn, fname, page_size):
 
 
 # todo
-# update knack_data_pub to drop camera IPs to FME source files as JSON
-# write code that creates tables
-# write code that checks current date for each reader and creates a 'todo' list
-# write code that gets count files
-# write code that parses raw count, appends an 'upload date' and site code to raw counts
-# update code that inserts raw counts and add date parsing
-# write code the inserts aggregate counts
-
-#  get IP addresses
-#  get latest data date and site info from camera
-#  get latest data date from db
-#  create work list
-#  site_id|   date |process_status|rows created
-#  abc1233|1-2-2017|complete
-
-fname = '2016-10-03.csv'
-index = 0
-page_size = 3000
-cols = ['timestamp', 'approach', 'turn', 'length_ft', 'speed_mph', 'phase', 'light', 'seconds_of_light_state', 'seconds_since_green', 'recent_free_flow_speed_mph', 'calibration_free_flow_speed_mph', 'include_in_approach_data', 'zone_id']
-
-dbname = secrets.DWH['dbname']
-user = secrets.DWH['user']
-password = secrets.DWH['password']
-host = secrets.DWH['host']
-port = 5432
-
-conn = psycopg2.connect(dbname=dbname, user=user, host=host, password=password, port=port)
-template = buildInsertTemplate(cols)
-results = processCountFile(conn, fname, page_size)
-
-conn.close()
+# check for and create sites/zones as needed
+# get count files for 
+# parses raw count, appends an 'upload date' and site code to raw counts
+# inserts raw counts and add date parsing
+# inserts aggregate counts
 
 
+detector_path = os.path.join(secrets.FME_DIRECTORY, 'detectors.json')
+detectors = getJSON(detector_path)
+gridsmart = [row for row in detectors if row['DETECTOR_TYPE'] == 'GRIDSMART']
 
+zones_all = {}
 
+for device in gridsmart:
+    #  get site data
+    try:
+        site = getSiteData(device)
+    except ValueError as e:
+        print(e)
+        continue
+    except requests.exceptions.ConnectionError as e:
+        print(e)
+        continue
 
+    #  get and process zone data
+    site_id = site.id
+    zones = site.get_vehicle_zones()
+    zones = appendSiteID(zones, site_id)
+    zones_all.update(zones)
+    
+    print('get zone data')
 
+zones_f = []
 
+for zone in zones_all.keys():
+    new = {}
+    for key in zones_all[zone].keys():
+        if key in fieldmap_zones:
+            new[fieldmap_zones[key]] = zones_all[zone][key]
 
+    zones_f.append(new)
 
+new = []
+for row in zones_f:
+    row = removeNulls(row)
+    new.append(row)
 
+pdb.set_trace()
 
+bob = open('zones.json', 'w')
+json.dump(new, bob)
+bob.close()
+
+# fname = '2016-10-03.csv'
+# index = 0
+# page_size = 3000
+# cols = ['timestamp', 'approach', 'turn', 'length_ft', 'speed_mph', 'phase', 'light', 'seconds_of_light_state', 'seconds_since_green', 'recent_free_flow_speed_mph', 'calibration_free_flow_speed_mph', 'include_in_approach_data', 'zone_id']
+
+# dbname = secrets.DWH['dbname']
+# user = secrets.DWH['user']
+# password = secrets.DWH['password']
+# host = secrets.DWH['host']
+# port = 5432
+
+# conn = psycopg2.connect(dbname=dbname, user=user, host=host, password=password, port=port)
+# template = buildInsertTemplate(cols)
+# results = processCountFile(conn, fname, page_size)
+
+# conn.close()
 
