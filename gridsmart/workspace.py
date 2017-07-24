@@ -14,7 +14,7 @@ from psycopg2.extras import execute_values
 from datetime import datetime
 import secrets
 
-
+count_datetime_format = 'YYYYMMDDTHHmmss.S'
 fieldmap_zones = {
     'Id' : 'id',
     'MaxRecall' : 'max_recall',
@@ -81,7 +81,6 @@ def removeNulls(obj):
 
     return obj
 
-
 def findRow(cursor, key, val):
     try:
         print('use mogrify')
@@ -97,8 +96,11 @@ def buildInsertTemplate(columns):
 
     return template
 
-def replaceDate(row):
-    row[0] = datetime.today()
+def replaceDate(row, datetime_format):
+    time_string = row[0]
+    dt = arrow.get(time_string, datetime_format)
+    dt = d.replace('US/Central')
+    row[0] = dt
     return tuple(row)
 
 def processCountFile(conn, fname, page_size):
@@ -115,7 +117,7 @@ def processCountFile(conn, fname, page_size):
             index += 1
 
             #  timestamps will need to be parsed and formatted to be database-friendly
-            row = replaceDate(row)
+            row = replaceDate(row, count_datetime_format)
             
             #  inserts is list of records that are to be inserted in this chunk
             inserts.append(row)
