@@ -7,7 +7,8 @@ class Zone(db.Entity):
     id = primarykey(str)
     max_recall = optional(bool)
     alerts = optional(str)
-    delay_seconds = optional(int)numberoflanes = optional(int)
+    delay_seconds = optional(int)
+    number_of_lanes = optional(int)
     turn_type = optional(str)
     speed_scale = optional(int)
     visibility_detection_enabled = optional(bool)
@@ -21,7 +22,6 @@ class Zone(db.Entity):
     include_in_data = optional(bool)
     name = optional(str)
     site_id = optional(str)
-    traffic_counts = set(traffic_count, cascade_delete=true)
 
 
 class Traffic_Count(db.Entity):

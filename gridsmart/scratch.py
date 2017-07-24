@@ -1,8 +1,5 @@
 import json
 import sys
-
-sys.path.append("H:\\ATD_BSA\\modules")
-sys.path.append("H:\\ATD_BSA\\ATD_GitHub\\transportation-data-publishing")
 import secrets
 import psycopg2
 from psycopg2.extensions import AsIs
@@ -84,3 +81,25 @@ sql = '''
     FROM zone
     FULL OUTER JOIN site ON zone.site_id=site.id;
 '''
+
+
+
+######## PONY
+from pony.orm import *
+from datetime import datetime
+
+db = Database()
+db.bind(provider='postgres', user=user, password=password, host=host, database=dbname, port=5432)
+sql_debug(True)
+db.generate_mapping(create_tables=False)
+
+
+
+
+
+
+
+
+
+
+

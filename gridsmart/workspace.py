@@ -4,10 +4,6 @@ import json
 import os
 import sys
 import socket
-
-sys.path.append("H:\\ATD_BSA\\modules")
-sys.path.append("H:\\ATD_BSA\\ATD_GitHub\\transportation-data-publishing")
-
 import logging
 import traceback
 import pytz
