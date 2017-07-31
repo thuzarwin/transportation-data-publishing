@@ -1,6 +1,9 @@
 import requests
 import pdb
 
+#  todo
+#  logging
+
 class Gridsmart:
     '''
     Class to interact with a GRIDSMART site via the API as
