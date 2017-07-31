@@ -1,4 +1,3 @@
-#  do you need to conn.commit() after execute values?
 import csv
 import json
 import os
@@ -13,7 +12,6 @@ import psycopg2
 from psycopg2.extras import execute_values
 import arrow
 import secrets
-
 
 def buildInsertTemplate(columns, table):
     col_str = ', '.join(str(c) for c in columns)

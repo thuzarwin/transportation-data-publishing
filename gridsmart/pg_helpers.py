@@ -4,10 +4,8 @@ Utilities for querying postgresql database
 see http://initd.org/psycopg/docs/usage.html
 and http://initd.org/psycopg/docs/sql.html
 '''
-import pdb
 import psycopg2
 from psycopg2 import sql
-from psycopg2.extensions import AsIs
 
 def queryColVal(conn, table, col, val):
     '''
@@ -15,7 +13,7 @@ def queryColVal(conn, table, col, val):
     return array of records
     '''
     cursor = conn.cursor()
-    query = sql.SQL("select * from {} where {} = %s").format(sql.Identifier(table), sql.Identifier(col))
+    query = sql.SQL("SELECT * FROM {} WHERE {} = %s").format(sql.Identifier(table), sql.Identifier(col))
     cursor.execute(query, (val,))
     return cursor.fetchall()
 
@@ -24,7 +22,7 @@ def insertByDict(conn, table, obj):
     cols = obj.keys()
     vals = [obj[key] for key in cols]
     #  http://initd.org/psycopg/docs/sql.html
-    query = sql.SQL("insert into {} ({}) values ({})").format(
+    query = sql.SQL("INSERT INTO {} ({}) VALUES ({})").format(
         sql.Identifier(table),
         sql.SQL(', ').join(map(sql.Identifier, cols)),
         sql.SQL(', ').join(map(sql.Placeholder, cols)))
@@ -34,4 +32,8 @@ def insertByDict(conn, table, obj):
     conn.commit()
     return True
 
-    
+def queryMaxWhere(conn, table, max_col, where_col, where_val):
+    cursor = conn.cursor()
+    query = sql.SQL("SELECT MAX({}) FROM {} WHERE {} = %s").format(sql.Identifier(max_col), sql.Identifier(table), sql.Identifier(col))
+    cursor.execute(query, (where_val,))
+    return cursor.fetchall()

@@ -1,5 +1,6 @@
 import requests
 import pdb
+import datetime
 
 #  todo
 #  logging
@@ -42,7 +43,7 @@ class Gridsmart:
         self.getConfig(self.endpoint, self.timeout)
 
         self.zones = None
-
+        
         if get_zones:
             self.getZones(self.config)
 
@@ -51,6 +52,9 @@ class Gridsmart:
             if fieldmap_zones:
                 for zone in self.zones:
                     self.zones[zone] = self.mapFields(self.zones[zone], self.fieldmap_zones)
+
+        self.days_available = None
+        self.getDaysAvailable(self.endpoint, self.timeout)
 
     def getId(self, endpoint, timeout):
         '''
@@ -207,6 +211,63 @@ class Gridsmart:
 
         return obj
 
+    def getDaysAvailable(self, endpoint, timeout, first_day=None, last_day=None, sort_descending=True):
+        """
+        Get the list of count days available in given range
+
+        Parameters
+        ----------
+        first_day : string (defaults to 2010-01-01)
+            First day in form YYYY-MM-DD
+        last_day : string (defaults to yesterday)
+            Last day in form YYYY-MM-DD
+        sort_descending : boolean (optional, default = True)
+            List is sorted descending by default.
+
+        Returns
+        -------
+        dates_available : [string]
+            List of strings of form 'YYYY-MM-DD'
+        """
+
+        r_days_available = requests.get(endpoint + 'counts.json', timeout=timeout)
+
+        if r_days_available.status_code != 200:
+            raise Exception('failed to get available dates')
+
+        days_available = r_days_available.json()
+
+        # make ascii rather than unicode
+        days_available = map(lambda s: s.encode('ascii'), days_available)
+
+        # handle the date range
+        if first_day is None:
+            first_date = datetime.date(2014,1,1)  #  arbitrary start date long before any GRIDSMART were installed
+        else:
+            first_date = datetime.datetime.strptime(first_day, '%Y-%m-%d')
+
+        if last_day is None:
+            last_date = datetime.date.today() - datetime.timedelta(1)
+        else:
+            last_date = datetime.datetime.strptime(last_day, '%Y-%m-%d')
+
+        yesterday = datetime.date.today() - datetime.timedelta(1)
+        if last_date > yesterday:
+            last_date = yesterday
+        
+        dates_available = map(lambda s:  datetime.datetime.strptime(s, '%Y-%m-%d'), days_available)
+        
+        dates_available_in_range = filter(lambda d: d>=datetime.datetime(first_date.year, first_date.month, first_date.day) and d<=datetime.datetime(last_date.year, last_date.month, last_date.day), dates_available)
+        
+        days_available = map(lambda d:  d.strftime('%Y-%m-%d'), dates_available_in_range)
+
+        # keep only through yesterday, sort descending from most recent
+        if sort_descending:
+            days_available.reverse()
+
+        self.days_available = days_available
+        return self.days_available
+
 #  helper methods
 def dashify_site_or_zone_id(id_):
     '''
@@ -217,4 +278,5 @@ def dashify_site_or_zone_id(id_):
     '''
     # undash first, then add dashes
     idu = id_.replace('-','')
-    return '%s-%s-%s-%s-%s' % (idu[:8], idu[8:12], idu[12:16], idu[16:20], idu[20:])
+    return '%s-%s-%s-%s-%s' % (idu[:8], idu[8:12], idu[12:16], idu[16:20], idu[20:])    
+
