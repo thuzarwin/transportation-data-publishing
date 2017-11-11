@@ -7,17 +7,31 @@ See:
 '''
 import pdb
 from fulcrum import Fulcrum
+import json
 import requests
 
 
 def get_all_metadata(api_key):
-    forms = Fulcrum.forms.search()
+    fulc = Fulcrum(api_key)
+    forms = fulc.forms.search()
     return forms['forms']
 
 
-def get_users(api_key, form_id):
+def get_form_id(app_name, metadata):
+    for form in metadata:
+        if app_name.lower() == form['name'].lower():
+            return form['id']
+    
+    return None
+
+def load_metadata(path='../config/metadata/fulcrum.json'):
+    with open(path, 'r') as fin:
+        return json.loads(fin.read())
+
+
+def get_users(api_key):
     fulcrum = Fulcrum(key=api_key)
-    users = fulcrum.memberships.search(url_params={'form_id': form_id}) 
+    users = fulcrum.memberships.search() 
     return users['memberships']
 
 

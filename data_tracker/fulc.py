@@ -8,6 +8,8 @@ todo:
 - and handle either 'direction'
 - assigned to id lookup/mapping
 - logging
+
+# results_knack = {'update' : 0, 'insert' : 0, 'errors' : 0
 '''
 
 import argparse
@@ -17,7 +19,10 @@ from fulcrum import Fulcrum
 import knackpy
 
 import _setpath
-from config.config import *
+from config.fulcrum.config import cfg as CFG_FULCRUM
+from config.fulcrum.config import CFG_KNACK_FULCRUM
+from config.fulcrum.config import KNACK_FULC_FIELDMAP
+
 from config.secrets import *
 from util import fulcutil
 
@@ -38,7 +43,7 @@ def cli_args():
     parser.add_argument(
         'fulcrum',
         type=str,
-        choices=['work_orders_prod'],
+        choices=['work orders'],
         help='Name of the fulcrum app that will be accessed.'
     )
 
@@ -67,21 +72,11 @@ def get_records_knack(app_name, config, endpoint_type='private'):
           app_id=app_id,
         )
 
+
 def map_fields(record, field_map, *, method):
     pdb.set_trace()
     print('ok')
 
-
-# KNACK_FULC_FIELDMAP = [
-#     {
-#         'name_knack' : 'id',
-#         'name_fulcrum' : 'knack_id',
-#         'detect_changes' : False,
-#         'table_fulcrum' : 'form',
-#         'type_fulcrum' : str,
-#         'type_knack' : str,
-#     }
-# ]
 
 def get_field_data(fulc, form_id):
     #  move to fulcutil
@@ -110,9 +105,13 @@ def get_fulcrum_id(knack_record, api_key, table):
 
 
 def update_fulcrum(*, record, task, api_key, form_id):
-    record = map_fields(record, KNACK_FULC_FIELDMAP, method='knack_to_fulcrum')
+    record = map_fields(
+        record,
+        field_map=KNACK_FULC_FIELDMAP,
+        method='knack_to_fulcrum',
+    )
+
     payload = fulcutil.get_template()
-    payload = fulcutil.format_record(record, payload, form_id)
     fulcrum = Fulcrum(key=api_key)
     
     if task == 'create':
@@ -131,15 +130,12 @@ def update_fulcrum(*, record, task, api_key, form_id):
 
 def main(app_knack, app_fulcrum):
     #  get configuration for Knack and Fulcrum
-    api_key_fulcrum = FULCRUM[app_fulcrum]['api_key']
-    form_id_fulcrum = FULCRUM[app_fulcrum]['form_id']
+    api_key_fulcrum = FULCRUM['api_key']
     cfg_knack_public = CFG_KNACK_FULCRUM[app_knack]['work_orders_public']
     cfg_knack_private = CFG_KNACK_FULCRUM[app_knack]['work_orders_private']
-
-    #  move this somewhere else
-    results_fulcrum = {'update' : 0, 'insert' : 0, 'errors' : 0}
-    results_knack = {'update' : 0, 'insert' : 0, 'errors' : 0}
-
+    meta_fulc = fulcutil.load_metadata()
+    form_id_fulcrum = fulcutil.get_form_id(app_fulcrum, meta_fulc)
+    
     #  check public knack endpoint for records
     kn_public = get_records_knack(app_knack, cfg_knack_public, endpoint_type='public')
     
@@ -148,7 +144,7 @@ def main(app_knack, app_fulcrum):
         return None
 
     #  get fulcrum user records
-    users_fulcrum = fulcutil.get_users(api_key_fulcrum, form_id_fulcrum)
+    users_fulcrum = fulcutil.get_users(api_key_fulcrum)
 
     #  get complete records data from private endpoint
     kn = get_records_knack(app_knack, cfg_knack_private, endpoint_type='private')

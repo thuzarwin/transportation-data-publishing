@@ -2,6 +2,7 @@
 Handy data-munging utilities.
 '''
 import csv
+import json
 from io import StringIO
 import shutil
 import pdb
@@ -443,4 +444,12 @@ def get_cctv_img(path, camera):
 
     except requests.exceptions.RequestException:
         return
+
+
+def json_to_file(data, outfile):
+    with open(outfile, 'w') as fout:
+        json.dump(data, fout)
+
+
+
 

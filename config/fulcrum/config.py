@@ -1,3 +1,8 @@
+cfg = {
+    'metadata' : '../metdata/fulcrum.json'
+}
+
+
 CFG_KNACK_FULCRUM = {
     'data_tracker_test_fulcrum' : {
         'work_orders_public' : {  
@@ -19,6 +24,7 @@ KNACK_FULC_FIELDMAP = [
         'name_knack' : 'id',
         'name_fulcrum' : 'knack_id',
         'detect_changes' : False,
+        'form_name_fulcrum' : 'Work Orders',
         'table_fulcrum' : 'form',
         'type_fulcrum' : str,
         'type_knack' : str,
