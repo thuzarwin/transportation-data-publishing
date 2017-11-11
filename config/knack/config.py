@@ -1,5 +1,3 @@
-#  conifguration file for Knack records
-
 cfg = {
     'atd_visitor_log' : {
         'obj' : None,
