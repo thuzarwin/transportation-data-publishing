@@ -24,10 +24,6 @@ KNACK_FULC_FIELDMAP = [
         'name_knack' : 'id',
         'name_fulcrum' : 'knack_id',
         'detect_changes' : False,
-        'form_name_fulcrum' : 'Work Orders',
-        'table_fulcrum' : 'form',
-        'type_fulcrum' : str,
-        'type_knack' : str,
     },
     {
         'name_knack' : 'fuclrum_id',
@@ -107,7 +103,48 @@ KNACK_FULC_FIELDMAP = [
         'detect_changes' : True,
         'table_fulcrum' : '',
     },
+    {
+        'name_knack' : 'WORK_TYPE_TROUBLE_CALL',
+        'name_fulcrum' : '',
+        'detect_changes' : True,
+        'table_fulcrum' : '',
+    },
+    {
+        'name_knack' : 'WORK_TYPE_SCHEDULED_WORK',
+        'name_fulcrum' : '',
+        'detect_changes' : True,
+        'table_fulcrum' : '',
+    },
+    {
+        'name_knack' : 'JOB_DESCRIPTION',
+        'name_fulcrum' : '',
+        'detect_changes' : True,
+        'table_fulcrum' : '',
+    },
 ]
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 

@@ -73,9 +73,22 @@ def get_records_knack(app_name, config, endpoint_type='private'):
         )
 
 
-def map_fields(record, field_map, *, method):
+def map_fields(record, field_map, *, source, dest):
+    record_mapped = {}
+    
+    for field in record:
+        for entry in field_map:
+            try:
+                if entry[f'name_{source}'] == field:
+                    record_mapped[entry[f'name_{dest}']] = record[field]
+                    continue
+
+            except KeyError:
+                continue
+
     pdb.set_trace()
-    print('ok')
+    return record_mapped
+
 
 
 def get_field_data(fulc, form_id):
@@ -108,7 +121,8 @@ def update_fulcrum(*, record, task, api_key, form_id):
     record = map_fields(
         record,
         field_map=KNACK_FULC_FIELDMAP,
-        method='knack_to_fulcrum',
+        source='knack',
+        dest='fulcrum'
     )
 
     payload = fulcutil.get_template()
