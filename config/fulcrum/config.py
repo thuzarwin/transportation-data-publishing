@@ -1,4 +1,6 @@
-cfg = {
+
+
+cfg = {  #   just get the metadata from app, don't use static copy.....right?
     'metadata' : '../metdata/fulcrum.json'
 }
 

@@ -24,6 +24,7 @@ def get_form_id(app_name, metadata):
     
     return None
 
+
 def load_metadata(path='../config/metadata/fulcrum.json'):
     with open(path, 'r') as fin:
         return json.loads(fin.read())
@@ -34,6 +35,13 @@ def get_users(api_key):
     users = fulcrum.memberships.search() 
     return users['memberships']
 
+
+def get_form_field_data(fulc, form_id):
+    '''
+    Return form field data from a Fulcrum instance
+    '''
+    form = fulc.forms.find(form_id)
+    return form['form'][0]['elements']
 
 # def get_user_by_email(api_key, form_id, email):
 #     email = email.lower()
