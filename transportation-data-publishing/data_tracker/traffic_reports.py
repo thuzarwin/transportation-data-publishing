@@ -65,10 +65,12 @@ def get_records(
     filters=None,
     rows_per_page=1000,
     page_limit=100):
-
+    
+    print(filters)
+    
     return knackpy.Knack(
-        view=knack_view,
-        scene=knack_scene,
+        view=view,
+        scene=scene,
         app_id=creds['app_id'],
         filters=filters,
         rows_per_page=rows_per_page,
@@ -271,17 +273,13 @@ def main(date_time):
             count += 1
             print( 'Inserting record {} of {}'.format( count, len(records_create) ) )
 
-            try:
-                res = knackpy.record(
-                    record,
-                    obj_key=knack_obj,
-                    app_id= knack_creds['app_id'],
-                    api_key=knack_creds['api_key'],
-                    method='create',
-                )
-            except Exception as e:
-                if 'unique' in e:
-                    logger.info('Duplicate insert: {}'.format(record))
+            res = knackpy.record(
+                record,
+                obj_key=knack_obj,
+                app_id= knack_creds['app_id'],
+                api_key=knack_creds['api_key'],
+                method='create',
+            )
 
         return 'Done.'
 
